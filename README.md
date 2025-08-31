@@ -118,8 +118,8 @@ VITE_API_URL=http://localhost:5000
 
 Use the following default credentials to test the application:
 - Technician:
-  - Email: tech@oralvis.com
-  - Password: password123
+  - Email: `tech@oralvis.com`
+  - Password: `password123`
 - Dentist:
-  - Email: dentist@oralvis.com
-  - Password: password120
+  - Email: `dentist@oralvis.com`
+  - Password: `password120`
