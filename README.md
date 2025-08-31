@@ -55,8 +55,8 @@ Follow these instructions to get the project up and running on your local machin
 ### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/your-username/oralvis-project.git](https://github.com/your-username/oralvis-project.git)
-cd oralvis-project
+git clone https://github.com/Maheeth1/oralvis-dentalScan.git
+cd oralvis-dentalScan
 ```
 
 ### 2. Backend Setup
@@ -118,8 +118,8 @@ VITE_API_URL=http://localhost:5000
 
 Use the following default credentials to test the application:
 - Technician:
-- - Email: tech@oralvis.com
+  - Email: tech@oralvis.com
   - Password: password123
 - Dentist:
-- - Email: dentist@oralvis.com
+  - Email: dentist@oralvis.com
   - Password: password120
