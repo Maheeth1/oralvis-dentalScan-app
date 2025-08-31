@@ -6,13 +6,18 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const db = require('./database.js');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // --- Middlewares ---
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:5173', // Your frontend URL
+    credentials: true,
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // --- Cloudinary Config ---
 cloudinary.config({ 
@@ -27,8 +32,7 @@ const upload = multer({ storage: storage });
 
 // --- Authentication Middleware ---
 const auth = (roles = []) => (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = req.cookies.token; // Read token from req.cookies
 
     if (!token) {
         return res.status(401).json({ message: "Access denied. No token provided." });
@@ -66,8 +70,28 @@ app.post('/api/login', (req, res) => {
         }
 
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token, role: user.role });
+        
+        res.cookie('token', token, {
+            httpOnly: true, // Makes the cookie inaccessible to client-side JS
+            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+            sameSite: 'strict', // Or 'lax' depending on your needs
+            maxAge: 3600000 // 1 hour
+        }).json({
+            message: "Logged in successfully",
+            role: user.role // Still send role for frontend routing
+        });
     });
+});
+
+// GET /api/verify
+app.get('/api/verify', auth(), (req, res) => {
+    res.json({ loggedIn: true, role: req.user.role });
+});
+
+
+// POST /api/logout
+app.post('/api/logout', (req, res) => {
+    res.clearCookie('token').json({ message: "Logged out successfully" });
 });
 
 // POST /api/upload - Protected for Technicians
