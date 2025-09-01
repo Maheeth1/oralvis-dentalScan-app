@@ -1,47 +1,45 @@
+// frontend/src/App.jsx
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
-// Your page components
 import LoginPage from './pages/LoginPage';
 import TechnicianDashboard from './pages/TechnicianDashboard';
 import DentistDashboard from './pages/DentistDashboard';
-
-// Layout and Route components
-import DashboardLayout from './components/DashboardLayout';
 import PrivateRoute from './components/PrivateRoute'; 
 
 function App() {
     return (
         <Router>
-            <div className="font-sans antialiased text-dark">
+            <div className="bg-gray-lighter min-h-screen font-sans antialiased text-dark">
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
+                    
+                    {/* Protected Technician Route */}
                     <Route
                         path="/technician"
                         element={
                             <PrivateRoute role="Technician">
-                                <DashboardLayout>
-                                    <TechnicianDashboard />
-                                </DashboardLayout>
+                                <TechnicianDashboard />
                             </PrivateRoute>
                         }
                     />
+
+                    {/* Protected Dentist Route */}
                     <Route
                         path="/dentist"
                         element={
                             <PrivateRoute role="Dentist">
-                                <DashboardLayout>
-                                    <DentistDashboard />
-                                </DashboardLayout>
+                                <DentistDashboard />
                             </PrivateRoute>
                         }
                     />
+
+                    {/* Redirect any other path to the login page */}
                     <Route path="*" element={<Navigate to="/login" />} />
                 </Routes>
             </div>
         </Router>
     );
 }
-
 
 export default App;
