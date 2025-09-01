@@ -1,5 +1,3 @@
-// frontend/src/pages/LoginPage.jsx
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -18,17 +16,15 @@ const LoginPage = () => {
         setError('');
         try {
             const response = await api.post('/api/login', { email, password });
-
-            // --- ADD THIS LINE TO DEBUG ---
-            console.log('Login successful, response data:', response.data); 
-
+            
+            // The role from the response determines where to navigate
             if (response.data.role === 'Technician') {
-                // --- ADD THIS LINE TO DEBUG ---
-                console.log('Navigating to /technician');
                 navigate('/technician');
             } else if (response.data.role === 'Dentist') {
-                console.log('Navigating to /dentist');
                 navigate('/dentist');
+            } else {
+                // Handle unexpected role or no role
+                setError('Login successful, but role is invalid.');
             }
         } catch (err) {
             setError('Invalid credentials. Please try again.');
@@ -43,25 +39,20 @@ const LoginPage = () => {
                 transition={{ duration: 0.5 }}
                 className="w-full max-w-md p-8 space-y-6 bg-white/50 rounded-2xl shadow-2xl backdrop-blur-lg border border-white/30"
             >
-                <div className="text-center">
-                    <h1 className="text-4xl font-bold text-dark tracking-tight">OralVis Portal</h1>
-                    <p className="mt-2 text-gray-600">Secure access for healthcare professionals.</p>
+                 <div className="text-center">
+                     <h1 className="text-4xl font-bold text-dark tracking-tight">OralVis Portal</h1>
+                     <p className="mt-2 text-gray-600">Secure access for healthcare professionals.</p>
                 </div>
-
+                
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div className="relative">
                         <EnvelopeIcon className="h-5 w-5 text-gray-400 absolute top-3.5 left-4" />
                         <input
-                            type="email"
-                            value={email}
-                            // THIS IS THE FIX: Changed e.e.target.value to e.target.value
-                            onChange={(e) => setEmail(e.target.value)}
+                            type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                             className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-dark"
-                            required
-                            placeholder="Email Address"
+                            required placeholder="Email Address"
                         />
                     </div>
-                    {/* ... the rest of the component is the same ... */}
                     <div className="relative">
                         <LockClosedIcon className="h-5 w-5 text-gray-400 absolute top-3.5 left-4" />
                         <input
