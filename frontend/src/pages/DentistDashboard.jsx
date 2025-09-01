@@ -97,6 +97,7 @@ const DentistDashboard = () => {
                         <div className="p-4 space-y-2">
                            <h3 className="text-lg font-bold text-gray-800 truncate">{scan.patientName}</h3>
                            <p className="text-sm text-gray-600">ID: <span className="font-medium text-gray-900">{scan.patientId}</span></p>
+                           <p className="text-sm text-gray-600">Scan Type: <span className="font-medium text-gray-900">{scan.scanType}</span></p>
                            <p className="text-sm text-gray-600">Region: <span className="font-medium text-gray-900">{scan.region}</span></p>
                            <p className="text-xs text-gray-500 pt-2 border-t border-gray-100 mt-2">
                                 Uploaded: {new Date(scan.uploadDate).toLocaleDateString()}
