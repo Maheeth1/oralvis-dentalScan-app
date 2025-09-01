@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 // --- Middlewares ---
 const allowedOrigins = [
     'http://localhost:5173', // For local development
-    // We will add the Vercel URL here later
+    'https://oralvis-healthcare.vercel.app/login'
 ];
 
 app.use(cors({
