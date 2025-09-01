@@ -18,13 +18,16 @@ const LoginPage = () => {
         setError('');
         try {
             const response = await api.post('/api/login', { email, password });
-            
-            // SAVE THE ROLE TO LOCALSTORAGE
-            localStorage.setItem('userRole', response.data.role);
+
+            // --- ADD THIS LINE TO DEBUG ---
+            console.log('Login successful, response data:', response.data); 
 
             if (response.data.role === 'Technician') {
+                // --- ADD THIS LINE TO DEBUG ---
+                console.log('Navigating to /technician');
                 navigate('/technician');
             } else if (response.data.role === 'Dentist') {
+                console.log('Navigating to /dentist');
                 navigate('/dentist');
             }
         } catch (err) {
