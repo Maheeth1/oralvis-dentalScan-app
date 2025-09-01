@@ -12,8 +12,21 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // --- Middlewares ---
+const allowedOrigins = [
+    'http://localhost:5173', // For local development
+    // We will add the Vercel URL here later
+];
+
 app.use(cors({
-    origin: 'http://localhost:5173', // Your frontend URL
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
     credentials: true,
 }));
 app.use(express.json());

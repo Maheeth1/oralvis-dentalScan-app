@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 
-const DBSOURCE = "db.sqlite";
+const DBSOURCE = process.env.DB_PATH || "db.sqlite";
 
 const db = new sqlite3.Database(DBSOURCE, (err) => {
     if (err) {
