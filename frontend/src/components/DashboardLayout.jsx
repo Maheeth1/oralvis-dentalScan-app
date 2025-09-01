@@ -24,3 +24,4 @@ const DashboardLayout = ({ children }) => {
 };
 
 export default DashboardLayout;
+//# sourceMappingURL=Dashboardlayout.jsx.map
