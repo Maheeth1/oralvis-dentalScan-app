@@ -85,9 +85,9 @@ app.post('/api/login', (req, res) => {
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
         
         res.cookie('token', token, {
-            httpOnly: true, // Makes the cookie inaccessible to client-side JS
-            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-            sameSite: 'strict', // Or 'lax' depending on your needs
+            httpOnly: true, 
+            secure: true, 
+            sameSite: 'none',
             maxAge: 3600000 // 1 hour
         }).json({
             message: "Logged in successfully",
