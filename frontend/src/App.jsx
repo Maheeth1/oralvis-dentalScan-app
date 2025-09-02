@@ -7,6 +7,7 @@ import TechnicianDashboard from './pages/TechnicianDashboard';
 import DentistDashboard from './pages/DentistDashboard';
 import PrivateRoute from './components/PrivateRoute'; 
 import LoadingScreen from './components/LoadingScreen';
+import DashboardLayout from './components/DashboardLayout'; // Import the layout component
 
 function App() {
     return (
@@ -31,7 +32,9 @@ function App() {
                         path="/dentist"
                         element={
                             <PrivateRoute role="Dentist">
-                                <DentistDashboard />
+                                <DashboardLayout title={"Dentist Dashboard"}>
+                                    <DentistDashboard />
+                                </DashboardLayout>
                             </PrivateRoute>
                         }
                     />

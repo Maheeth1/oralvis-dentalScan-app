@@ -1,130 +1,193 @@
-// frontend/src/pages/DentistDashboard.jsx
-
 import React, { useEffect, useState } from 'react';
 import jsPDF from 'jspdf';
-import DashboardLayout from '../components/DashboardLayout'; // Provides sidebar and layout
-import api from '../api'; // For authenticated API calls
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    DocumentArrowDownIcon, 
+    EyeIcon, 
+    CalendarDaysIcon, 
+    MapPinIcon, 
+    TrashIcon 
+} from '@heroicons/react/24/outline';
+import api from '../api'; 
+import LoadingScreen from '../components/LoadingScreen';
 
 const DentistDashboard = () => {
-    // State for storing the list of scans, loading status, and any errors
     const [scans, setScans] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
 
-    // Fetch scans from the backend when the component first loads
     useEffect(() => {
         const fetchScans = async () => {
             try {
                 const response = await api.get('/api/scans');
                 setScans(response.data.scans);
-            } catch (err) {
-                setError("Failed to fetch scans. Please try again.");
-                console.error("Failed to fetch scans", err);
+            } catch (error) {
+                console.error("Failed to fetch scans", error);
+                // Optionally, set an error state to show a message to the user
             } finally {
-                setLoading(false); // Stop loading once the request is complete
+                setLoading(false);
             }
         };
         fetchScans();
-    }, []); // The empty dependency array ensures this runs only once
-    
-    // Function to generate and download a PDF report for a specific scan
-    const handleDownloadPDF = async (scan) => {
+    }, []);
+
+    const handleDownloadPDF = (scan) => {
         const doc = new jsPDF();
 
-        // Add report title and patient details
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(20);
-        doc.setTextColor('#1F2937'); // Dark Gray
-        doc.text("OralVis Scan Report", 15, 20);
+        doc.setFontSize(22);
+        doc.setTextColor('#3B82F6'); 
+        doc.text("OralVis Healthcare Scan Report", 10, 25);
+
+        doc.setDrawColor('#E5E7EB'); 
+        doc.line(10, 30, 200, 30);
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(12);
-        doc.text(`Patient Name: ${scan.patientName}`, 15, 40);
-        doc.text(`Patient ID: ${scan.patientId}`, 15, 50);
-        doc.text(`Scan Type: ${scan.scanType}`, 15, 60);
-        doc.text(`Region: ${scan.region}`, 15, 70);
-        doc.text(`Upload Date: ${new Date(scan.uploadDate).toLocaleString()}`, 15, 80);
+        doc.setTextColor('#1F2937'); 
 
-        try {
-            // Fetch the image from Cloudinary to avoid browser security issues
-            const response = await fetch(scan.imageUrl);
-            const blob = await response.blob();
+        let yPos = 40;
+        const addText = (label, value) => {
+            doc.text(`${label}:`, 10, yPos);
+            doc.setFont('helvetica', 'bold');
+            doc.text(value, 45, yPos);
+            doc.setFont('helvetica', 'normal');
+            yPos += 8;
+        };
 
-            // Convert the fetched image (blob) into a base64 string
-            const reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = () => {
-                const base64data = reader.result;
+        addText(`Patient Name`, scan.patientName);
+        addText(`Patient ID`, scan.patientId);
+        addText(`Scan Type`, scan.scanType);
+        addText(`Region`, scan.region);
+        addText(`Upload Date`, new Date(scan.uploadDate).toLocaleString());
+        
+        const img = new Image();
+        img.crossOrigin = "Anonymous"; 
+        img.src = scan.imageUrl;
+        img.onload = () => {
+            const imgWidth = 180;
+            const imgHeight = (img.height * imgWidth) / img.width;
+            const imgX = (doc.internal.pageSize.getWidth() - imgWidth) / 2;
+            let imgY = yPos + 10;
 
-                // Add the image to the PDF, calculating its size to fit the page
-                const imgProps = doc.getImageProperties(base64data);
-                const pdfWidth = doc.internal.pageSize.getWidth();
-                const margin = 15;
-                const imgWidth = pdfWidth - margin * 2;
-                const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-                
-                doc.addImage(base64data, 'JPEG', margin, 90, imgWidth, imgHeight);
+            if (imgY + imgHeight > doc.internal.pageSize.getHeight() - 10) {
+                doc.addPage();
+                imgY = 20; // Start image lower on new page
+            }
+            doc.addImage(img, 'JPEG', imgX, imgY, imgWidth, imgHeight);
+            doc.save(`report-${scan.patientId}-${Date.now()}.pdf`);
+        };
+        img.onerror = () => {
+            alert("Could not load image for PDF. Please ensure the image URL is accessible.");
+        };
+    };
 
-                // Trigger the browser to download the PDF
-                doc.save(`report-${scan.patientId}.pdf`);
-            };
-        } catch (error) {
-            console.error("Error creating PDF:", error);
-            alert("Failed to create PDF. Could not fetch image data for the report.");
+    const handleDelete = async (scanId) => {
+        if (window.confirm('Are you sure you want to permanently delete this scan? This action cannot be undone.')) {
+            try {
+                await api.delete(`/api/scans/${scanId}`);
+                setScans(currentScans => currentScans.filter(scan => scan.id !== scanId));
+            } catch (error) {
+                console.error("Failed to delete scan:", error);
+                alert("Could not delete the scan. Please try again.");
+            }
         }
     };
 
-    // Render the main component
-    return (
-        <DashboardLayout title="Dentist Scan Viewer">
-            {/* Conditional rendering based on the loading and error states */}
-            {loading && <div className="text-center py-10 text-gray-600">Loading scans...</div>}
-            
-            {error && <div className="text-center py-10 text-red-600 font-medium">{error}</div>}
-            
-            {!loading && scans.length === 0 && !error && (
-                <div className="text-center py-10 text-gray-500">No scans have been uploaded yet.</div>
-            )}
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
 
-            {/* Grid container for the scan cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {scans.map((scan) => (
-                    <div key={scan.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 transition-transform duration-200 hover:scale-105 hover:shadow-lg">
-                        {/* Scan Image */}
-                        <img src={scan.imageUrl} alt={`Scan for ${scan.patientName}`} className="w-full h-52 object-cover bg-gray-100" />
-                        
-                        {/* Card Content */}
-                        <div className="p-4 space-y-2">
-                           <h3 className="text-lg font-bold text-gray-800 truncate">{scan.patientName}</h3>
-                           <p className="text-sm text-gray-600">ID: <span className="font-medium text-gray-900">{scan.patientId}</span></p>
-                           <p className="text-sm text-gray-600">Scan Type: <span className="font-medium text-gray-900">{scan.scanType}</span></p>
-                           <p className="text-sm text-gray-600">Region: <span className="font-medium text-gray-900">{scan.region}</span></p>
-                           <p className="text-xs text-gray-500 pt-2 border-t border-gray-100 mt-2">
-                                Uploaded: {new Date(scan.uploadDate).toLocaleDateString()}
-                           </p>
-                           
-                           {/* Action Buttons */}
-                           <div className="pt-2 flex flex-col space-y-2">
-                                <a 
-                                    href={scan.imageUrl} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="text-center py-2 px-3 text-sm font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
-                                >
-                                    View Full Image
-                                </a>
-                                <button 
-                                    onClick={() => handleDownloadPDF(scan)} 
-                                    className="py-2 px-3 text-sm font-semibold text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors"
-                                >
-                                    Download Report
-                                </button>
-                           </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </DashboardLayout>
+    const cardVariants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: { y: 0, opacity: 1 }
+    };
+
+    return (
+        <div className="p-8">
+            <AnimatePresence>
+                {loading ? (
+                    <LoadingScreen />
+                ) : scans.length === 0 ? (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-center py-10 text-gray-600 text-lg"
+                    >
+                        No scans available.
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    >
+                        {scans.map((scan) => (
+                            <motion.div
+                                key={scan.id}
+                                variants={cardVariants}
+                                layout
+                                exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
+                                whileHover={{ scale: 1.03, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }} // Lift and shadow on hover
+                                whileTap={{ scale: 0.98 }} // Slight press down on click
+                                transition={{ type: "spring", stiffness: 300, damping: 20 }} // Smooth spring animation
+                                className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-200 flex flex-col cursor-pointer" // Add cursor-pointer
+                            >
+                                <img src={scan.imageUrl} alt={`Scan for ${scan.patientName}`} className="w-full h-48 object-cover"/>
+                                <div className="p-5 flex flex-col flex-grow">
+                                    <h3 className="text-lg font-bold text-dark truncate">{scan.patientName}</h3>
+                                    <p className="text-sm text-gray-500 mb-4">ID: {scan.patientId}</p>
+                                    
+                                    <div className="space-y-2 text-sm text-gray-700 mb-4 flex-grow">
+                                        <div className="flex items-center"><MapPinIcon className="h-4 w-4 mr-2 text-gray-400"/>Region: <span className="font-semibold ml-1">{scan.region}</span></div>
+                                        <div className="flex items-center">
+                                            <CalendarDaysIcon className="h-4 w-4 mr-2 text-gray-400" />
+                                            Date:{" "}
+                                            <span className="font-semibold ml-1">
+                                                {(() => {
+                                                const date = new Date(scan.uploadDate);
+                                                return `${String(date.getDate()).padStart(2, "0")}/${String(
+                                                    date.getMonth() + 1
+                                                ).padStart(2, "0")}/${date.getFullYear()}`;
+                                                })()}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-auto pt-4 border-t border-gray-100 grid grid-cols-3 gap-2">
+                                        <a 
+                                            href={scan.imageUrl} target="_blank" rel="noopener noreferrer" 
+                                            title="View Full Image" 
+                                            className="flex items-center justify-center py-2 px-2 text-sm font-semibold text-primary bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors duration-200 ease-in-out"
+                                        >
+                                           <EyeIcon className="h-5 w-5"/>
+                                        </a>
+                                        <button 
+                                            onClick={() => handleDownloadPDF(scan)} 
+                                            title="Download Report" 
+                                            className="flex items-center justify-center py-2 px-2 text-sm font-semibold text-secondary bg-green-100 rounded-lg hover:bg-green-200 transition-colors duration-200 ease-in-out"
+                                        >
+                                            <DocumentArrowDownIcon className="h-5 w-5"/>
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDelete(scan.id)} 
+                                            title="Delete Scan" 
+                                            className="flex items-center justify-center py-2 px-2 text-sm font-semibold text-red-600 bg-red-100 rounded-lg hover:bg-red-200 transition-colors duration-200 ease-in-out"
+                                        >
+                                            <TrashIcon className="h-5 w-5"/>
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 };
 

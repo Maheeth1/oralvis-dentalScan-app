@@ -155,6 +155,43 @@ app.get('/api/scans', auth(['Dentist']), (req, res) => {
     });
 });
 
+// DELETE /api/scans/:id - Protected for Dentists
+app.delete('/api/scans/:id', auth(['Dentist']), (req, res) => {
+    const scanId = req.params.id;
+
+    // First, find the scan to get its imageUrl for Cloudinary deletion
+    db.get("SELECT imageUrl FROM scans WHERE id = ?", [scanId], (err, row) => {
+        if (err || !row) {
+            return res.status(404).json({ message: "Scan not found." });
+        }
+
+        const imageUrl = row.imageUrl;
+        // Extract the public_id from the full Cloudinary URL
+        // Example URL: https://res.cloudinary.com/<cloud_name>/image/upload/v12345/oralvis_scans/image_id.jpg
+        // We need: oralvis_scans/image_id
+        const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
+        
+        // 1. Delete the image from Cloudinary
+        cloudinary.uploader.destroy(publicId, (error, result) => {
+            if (error) {
+                // Log the error but proceed to delete from DB anyway
+                console.error("Cloudinary deletion error:", error);
+            }
+            console.log("Cloudinary deletion result:", result);
+
+            // 2. Delete the scan record from the SQLite database
+            db.run("DELETE FROM scans WHERE id = ?", [scanId], function(err) {
+                if (err) {
+                    return res.status(500).json({ message: "Database deletion failed.", error: err.message });
+                }
+                if (this.changes === 0) {
+                     return res.status(404).json({ message: "Scan not found in database." });
+                }
+                res.status(200).json({ message: "Scan deleted successfully." });
+            });
+        });
+    });
+});
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
