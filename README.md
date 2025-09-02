@@ -4,7 +4,7 @@ OralVis Healthcare is a comprehensive full-stack web application designed to str
 
 This project demonstrates key full-stack development concepts including secure authentication with `HttpOnly` cookies, cloud media management, role-based access control, and a modern, responsive user interface.
 
-**Live Demo:** [Link to your hosted application]
+**Live Demo:** [https://oralvis-healthcare.vercel.app/](https://oralvis-healthcare.vercel.app/)
 
 ---
 
@@ -24,9 +24,8 @@ This project demonstrates key full-stack development concepts including secure a
 
 | Login Page                                     | Technician Dashboard                               | Dentist Dashboard                                  |
 | ---------------------------------------------- | -------------------------------------------------- | -------------------------------------------------- |
-|  |  |  |
+| ![](./frontend/src/assets/screenshots/login-page.png) | ![](./frontend/src/assets/screenshots/technician-dashboard.png) | ![](./frontend/src/assets/screenshots/dentist-dashboard.png) |
 
-*(You should replace the bracketed text above with actual images of your application.)*
 
 ---
 
